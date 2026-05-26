@@ -731,7 +731,8 @@
                     // ============================================
                     // 2. 选择民办初中的高纯度展示逻辑
                     // ============================================
-                    document.getElementById('rep-public-info').classList.remove('hidden');
+                    const publicInfoEl = document.getElementById('rep-public-info');
+                    if (publicInfoEl) publicInfoEl.classList.remove('hidden');
 
                     if (schoolDetails) {
                         // 高阶中签摇号率计算

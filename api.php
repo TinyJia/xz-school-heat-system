@@ -25,6 +25,20 @@ $conn->set_charset("utf8mb4");
 
 $action = $_GET['action'] ?? '';
 
+// 学校数据维护后台鉴权
+function is_admin_authed() {
+    $pwd = $_GET['pwd'] ?? ($_POST['pwd'] ?? '');
+    if ($pwd === '') {
+        $raw = file_get_contents('php://input');
+        if ($raw) {
+            $json = json_decode($raw, true);
+            if (is_array($json) && isset($json['pwd'])) $pwd = $json['pwd'];
+        }
+    }
+    return $pwd === 'xzxsc2026';
+}
+
+
 // 增加超时控制，防止网络请求无限挂起导致 PHP 假死
 function curl_get($url) {
     $ch = curl_init();
@@ -385,6 +399,63 @@ elseif ($action === 'list') {
     }
     echo json_encode($list);
 }
+
+
+// 10. 学校后台列表（公办/民办）
+elseif ($action === 'school_admin_list') {
+    if (!is_admin_authed()) {
+        echo json_encode(["success"=>false,"message"=>"未授权"]);
+        exit;
+    }
+    $type = $_GET['type'] ?? 'public';
+    $kw = trim($_GET['kw'] ?? '');
+    $table = $type === 'private' ? 'private_school' : 'public_school';
+
+    if ($kw !== '') {
+        $like = "%{$kw}%";
+        $stmt = $conn->prepare("SELECT id, school_name, enrollment_2025, signup_2025, admit_2025, contact_phone, remark FROM {$table} WHERE school_name LIKE ? ORDER BY school_name ASC LIMIT 300");
+        $stmt->bind_param("s", $like);
+    } else {
+        $stmt = $conn->prepare("SELECT id, school_name, enrollment_2025, signup_2025, admit_2025, contact_phone, remark FROM {$table} ORDER BY school_name ASC LIMIT 300");
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $rows = [];
+    while ($r = $res->fetch_assoc()) { $rows[] = $r; }
+    $stmt->close();
+    echo json_encode(["success"=>true, "rows"=>$rows]);
+}
+
+// 11. 学校后台保存（公办/民办）
+elseif ($action === 'school_admin_update') {
+    if (!is_admin_authed()) {
+        echo json_encode(["success"=>false,"message"=>"未授权"]);
+        exit;
+    }
+    $type = $_GET['type'] ?? 'public';
+    $table = $type === 'private' ? 'private_school' : 'public_school';
+
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw, true);
+    if (!is_array($data)) { echo json_encode(["success"=>false,"message"=>"参数错误"]); exit; }
+
+    $id = intval($data['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(["success"=>false,"message"=>"ID无效"]); exit; }
+
+    $enrollment_2025 = $data['enrollment_2025'] ?? null;
+    $signup_2025 = $data['signup_2025'] ?? null;
+    $admit_2025 = $data['admit_2025'] ?? null;
+    $contact_phone = $data['contact_phone'] ?? '';
+    $remark = $data['remark'] ?? '';
+
+    $stmt = $conn->prepare("UPDATE {$table} SET enrollment_2025 = ?, signup_2025 = ?, admit_2025 = ?, contact_phone = ?, remark = ? WHERE id = ? LIMIT 1");
+    $stmt->bind_param("iiissi", $enrollment_2025, $signup_2025, $admit_2025, $contact_phone, $remark, $id);
+    $ok = $stmt->execute();
+    $stmt->close();
+
+    echo json_encode(["success"=>(bool)$ok]);
+}
+
 
 $conn->close();
 ?>
