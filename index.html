@@ -3,55 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>徐州小升初志愿测算系统</title>
+    <title>彭城小升初·市区初中公民同招测算参考中心</title>
+    <!-- 引入微信官方JS-SDK基础功能库 -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans SC', sans-serif; background-color: #fcf6ee; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .slide-in { animation: slideIn 0.3s ease-out forwards; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="min-h-screen pb-16 relative">
+<body class="min-h-screen pb-16 relative text-slate-800">
 
     <!-- 弹窗式消息提示（替代系统级alert） -->
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-sm transition-all duration-300 pointer-events-none opacity-0 scale-95">
-        <div class="bg-amber-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2">
-            <span id="toast-message" class="text-xs font-bold leading-tight">消息提示</span>
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2">
+            <span id="toast-message" class="text-xs font-medium leading-tight">消息提示</span>
         </div>
     </div>
 
-    <!-- 顶层遮罩：强制非微信环境展示高阶扫码页 -->
-    <div id="wechat-required-blocker" class="hidden fixed inset-0 bg-orange-950/95 z-50 flex flex-col items-center justify-center p-6 text-center text-white">
-        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 max-w-sm w-full space-y-6 shadow-2xl">
-            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto animate-bounce">
-                <svg class="w-8 h-8 text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+    <!-- 顶层遮罩：移动端微信环境提示 -->
+    <div id="wechat-required-blocker" class="hidden fixed inset-0 bg-slate-950/98 z-50 flex flex-col items-center justify-center p-6 text-center text-white">
+        <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 max-w-sm w-full space-y-6 shadow-2xl">
+            <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M12 2a10 10 0 110 20 10 10 0 010-20z"></path>
                 </svg>
             </div>
             <div class="space-y-2">
-                <h3 class="text-lg font-black tracking-wider">微信专属测试系统</h3>
-                <p class="text-xs text-orange-200/80 leading-relaxed">系统已关联微信公众号平台安全环境，需获取微信家长基本状态进行精准追踪与防重测过滤。</p>
+                <h3 class="text-lg font-bold tracking-wider">访问环境提示</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">本测试工具为第三方参考系统，建议于移动端微信环境内运行配合体验。</p>
             </div>
-            
-            <!-- 动态生成当前网页URL的二维码 -->
             <div class="bg-white p-3 rounded-2xl w-44 h-44 mx-auto shadow-inner flex items-center justify-center">
                 <img id="dynamic-qr-img" class="w-40 h-40" src="" alt="请在微信内扫码">
             </div>
-            
-            <p class="text-[10px] text-orange-300/60 tracking-widest font-bold">请使用手机微信扫描上方二维码进入</p>
+            <p class="text-[10px] text-slate-500 tracking-widest font-bold">请使用手机微信扫描二维码进入系统</p>
+            <p class="text-[9px] text-slate-500 leading-normal pt-2 border-t border-white/5">声明：本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。</p>
         </div>
     </div>
 
-    <!-- 默认隐藏的网页主体容器，防止非微信环境打开时闪现内容 -->
+    <!-- 阻断防御层：异常访问受限提示 -->
+    <div id="blackout-defense-blocker" class="hidden fixed inset-0 bg-slate-50 z-50 flex flex-col items-center justify-center p-6 text-center text-slate-800 animate-fade">
+        <div class="space-y-6 max-w-sm w-full">
+            <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                <span class="text-xl">⚠️</span>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-bold tracking-wide text-slate-900">系统提示：当前访问受限</h3>
+                <p class="text-xs text-slate-500 leading-relaxed px-4">
+                    检测到您当前的微信访问存在异常高频请求行为。为保障系统运行平稳，当前查询请求已暂停服务。
+                </p>
+            </div>
+            <div class="border-t border-slate-200/60 pt-4 space-y-2">
+                <p class="text-[10px] text-slate-400 font-medium">如有招生政策疑问，请关注教育局发布的官方通知。</p>
+                <p class="text-[9px] text-slate-400 leading-normal bg-slate-100 p-2 rounded">声明：本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 网页主体容器 -->
     <div id="main-app-container" class="hidden">
         
-        <!-- 顶部导航与微信身份区 -->
-        <div class="bg-white border-b border-orange-100/50 px-4 py-3 flex items-center justify-between shadow-sm">
+        <!--顶部导航与身份 -->
+        <div class="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shadow-sm">
             <div class="flex items-center space-x-2">
-                <img id="wx-avatar" class="w-6 h-6 rounded-full hidden border border-gray-200 shadow-sm object-cover" src="" alt="头像">
-                <span id="wx-pulse" class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-                <span id="ui-wx-status" class="text-xs font-extrabold text-gray-700 tracking-wider">正在检测微信授权...</span>
+                <img id="wx-avatar" class="w-6 h-6 rounded-full hidden border border-slate-200 object-cover" src="" alt="头像">
+                <span id="wx-pulse" class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
+                <span id="ui-wx-status" class="text-xs font-bold text-slate-500">正在安全连接...</span>
             </div>
         </div>
 
@@ -59,225 +78,255 @@
 
             <!-- 页面一：主页 -->
             <div id="page-landing" class="space-y-4">
-                <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-6 text-white shadow-lg">
-                    <h1 class="text-3xl font-black tracking-tight">徐州市区初中</h1>
-                    <h2 class="text-xl font-bold mt-1 text-orange-100">公办匹配与民办摇号自测</h2>
-                    <p class="text-[11px] opacity-80 mt-3 pt-3 border-t border-white/20">对接徐州“公民同招、超额派位、学额统筹”真实政策，生成升学评估报告。</p>
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-xl space-y-4">
+                    <div class="space-y-1">
+                        <span class="bg-slate-700 text-slate-300 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded border border-slate-600">第三方参考工具 · 仅限测试使用</span>
+                        <h1 class="text-2xl font-black tracking-tight">徐州市区小升初</h1>
+                        <h2 class="text-lg font-bold text-slate-300">学区公办匹配与民办摇号概率测算参考系统</h2>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed pt-3 border-t border-slate-800">
+                        本测试系统根据政府及教育局公开数据与互联网公开招生录取规则设计，通过输入拟报意向，在线提供结构性诊断分析。
+                    </p>
+                    <div class="bg-black/20 p-2.5 rounded-xl text-[10px] text-slate-400 leading-normal">
+                        <b>重要声明：</b>本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。
+                    </div>
                 </div>
-                <button onclick="startCalculate()" class="w-full bg-white text-orange-600 border-2 border-orange-500 py-4 rounded-2xl font-black text-base shadow flex justify-center">一键免费测算</button>
+                <button onclick="startCalculate()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-bold text-base shadow-lg flex justify-center transition-all">开启政策适配测算（仅供参考）</button>
             </div>
 
-            <!-- 页面二：基础注册（第一步提交） -->
+            <!-- 页面二：基础注册 -->
             <div id="page-register" class="hidden slide-in space-y-4">
-                <div class="bg-white rounded-3xl p-6 shadow border border-orange-100">
-                    <h2 class="text-center font-black text-orange-600 text-lg mb-4">第一步：建立学生档案</h2>
+                <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-4">
+                    <div>
+                        <h2 class="text-center font-bold text-slate-900 text-base mb-1">第一步：录入基本信息</h2>
+                        <p class="text-center text-[10px] text-slate-400">系统将根据当前就读年级与学校提供对应数据比对</p>
+                    </div>
+                    
                     <form onsubmit="event.preventDefault(); submitProfile();" class="space-y-4">
-                        <div><label class="block text-xs font-bold text-gray-500 mb-1">孩子姓名</label><input type="text" id="child-name" class="w-full bg-gray-50 border rounded-xl p-3 text-sm focus:outline-none" required></div>
-                        <div><label class="block text-xs font-bold text-gray-500 mb-1">家长手机号</label><input type="tel" id="parent-phone" maxlength="11" class="w-full bg-gray-50 border rounded-xl p-3 text-sm focus:outline-none" required></div>
-                        <div><label class="block text-xs font-bold text-gray-500 mb-1">当前年级</label><select id="child-grade" class="w-full bg-gray-50 border rounded-xl p-3 text-sm"><option>六年级</option><option>五年级</option></select></div>
-                        <div><label class="block text-xs font-bold text-gray-500 mb-1">在读小学</label><input type="text" id="current-school" class="w-full bg-gray-50 border rounded-xl p-3 text-sm focus:outline-none" placeholder="例：少华街小学" required></div>
-                        <button type="submit" class="w-full bg-orange-500 text-white font-black py-3.5 rounded-xl text-sm shadow">保存档案，下一步</button>
+                        <div><label class="block text-xs font-bold text-slate-600 mb-1">学生姓名</label><input type="text" id="child-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-slate-500" required></div>
+                        <div><label class="block text-xs font-bold text-slate-600 mb-1">家长联系手机（接收测试报告通知）</label><input type="tel" id="parent-phone" maxlength="11" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-slate-500" required></div>
+                        <div><label class="block text-xs font-bold text-slate-600 mb-1">当前就读年级</label><select id="child-grade" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm"><option>六年级</option><option>五年级</option></select></div>
+                        <div><label class="block text-xs font-bold text-slate-600 mb-1">毕业就读小学</label><input type="text" id="current-school" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-slate-500" placeholder="例：少华街小学" required></div>
+                        
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[10px] text-slate-400 leading-normal">
+                            <b>测试声明：</b>本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl text-sm shadow-md">确认信息，进行下一步</button>
                     </form>
                 </div>
             </div>
 
-            <!-- 页面三：意向填报（第二步提交） -->
+            <!-- 页面三：意向填报与材料条件选择 -->
             <div id="page-intent" class="hidden slide-in space-y-4">
-                <div class="bg-white rounded-3xl p-5 shadow border border-orange-100">
-                    <h2 class="font-black text-orange-600 text-sm mb-4 border-b pb-2">第二步：第一阶段升学意向选择</h2>
+                <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100">
+                    <h2 class="font-bold text-slate-900 text-sm mb-4 border-b pb-2">第二步：录入拟填报志愿意向</h2>
                     
                     <div class="space-y-4">
-                        <!-- 路线选择 -->
                         <div class="grid grid-cols-2 gap-3">
-                            <label class="bg-orange-50 p-3 rounded-xl border border-orange-200 flex items-center space-x-2 cursor-pointer">
-                                <input type="radio" name="school_type" value="公办" checked onchange="toggleType('公办')"> <span class="text-xs font-bold">对口直升公办</span>
+                            <label class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center space-x-2 cursor-pointer hover:bg-slate-100 transition-all">
+                                <input type="radio" name="school_type" value="公办" checked onchange="toggleType('公办')"> <span class="text-xs font-bold text-slate-700">对口直升公办</span>
                             </label>
-                            <label class="bg-orange-50 p-3 rounded-xl border border-orange-200 flex items-center space-x-2 cursor-pointer">
-                                <input type="radio" name="school_type" value="民办" onchange="toggleType('民办')"> <span class="text-xs font-bold">热门民办摇号</span>
+                            <label class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center space-x-2 cursor-pointer hover:bg-slate-100 transition-all">
+                                <input type="radio" name="school_type" value="民办" onchange="toggleType('民办')"> <span class="text-xs font-bold text-slate-700">民办随机派位</span>
                             </label>
+                        </div>
+
+                        <!-- 户籍与房产类型选择 -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xs font-bold text-slate-800">户籍与房产类型选择 (参考审档顺位)</h3>
+                                <span class="text-[9px] text-slate-600 bg-slate-200 px-1.5 py-0.5 rounded font-bold">自测使用</span>
+                            </div>
+                            <select id="user-sequence-type" class="w-full border border-slate-200 rounded-lg p-2.5 text-xs bg-white text-slate-700 font-medium focus:outline-none focus:border-slate-500">
+                                <option value="seq1">【第一序列】房产、户籍与实际居住地完全一致的</option>
+                                <option value="seq2_1">【第二序列】唯一房产但与户籍不一致的</option>
+                                <option value="seq2_2">【第二序列】以祖父母或外祖父母房产确定施教区的</option>
+                                <option value="seq2_3">【第二序列】有市区房产、有本地社保/经商证明的外来随迁子女</option>
+                                <option value="seq3_1">【第三序列】拆迁异地安置尚未取得房产证的（按房产地）</option>
+                                <option value="seq3_2">【第三序列】无房租房、且能提供市区社保与经商证明的外来随迁子女</option>
+                                <option value="seq4">【第四序列】房屋拆迁未购房的（按户籍）或其他特殊统筹顺位</option>
+                            </select>
                         </div>
 
                         <!-- 学区房信息 -->
-                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                            <h3 class="text-xs font-black text-gray-800">无论何种选择，必须验证对口公办学区</h3>
-                            <select id="user-district" onchange="renderPublicSchools()" class="w-full border rounded-lg p-2 text-xs">
-                                <option value="泉山区">泉山区</option>
-                                <option value="云龙区">云龙区</option>
-                                <option value="鼓楼区">鼓楼区</option>
-                                <option value="经开区">经开区</option>
-                            </select>
-                            <input type="text" id="community-name" oninput="matchCommunity(this.value)" placeholder="输入住宅小区自动匹配(如:兴隆花园)" class="w-full border rounded-lg p-2 text-xs">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xs font-bold text-slate-800">房产所属对口公办参考匹配</h3>
+                                <span class="text-[10px] text-slate-400">公开信息比对</span>
+                            </div>
                             
-                            <!-- 房产学区房多重智能匹配结果指示器 -->
-                            <div id="ui-match-result" class="hidden bg-green-50/70 border border-green-200 rounded-2xl p-4 text-xs space-y-3 slide-in">
-                                <div class="font-extrabold text-green-800 text-xs">
-                                    🤔 您的辖区初中可能是？
-                                </div>
-                                
-                                <!-- 动态匹配列表 -->
+                            <select id="user-district" onchange="renderPublicSchools()" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                                <option value="">正在同步数据...</option>
+                            </select>
+                            
+                            <input type="text" id="community-name" oninput="matchCommunity(this.value)" placeholder="输入住宅小区(如:兴隆花园)" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                            
+                            <div id="ui-match-result" class="hidden bg-slate-100 border border-slate-200 rounded-2xl p-4 text-xs space-y-3 slide-in">
+                                <div class="font-bold text-slate-800 text-xs">🔍 基于互联网公开数据历史参考匹配结果：</div>
                                 <div id="ui-matched-schools-list" class="space-y-2"></div>
-                                
-                                <div class="text-[10px] text-green-700/80 leading-relaxed border-t border-green-200/50 pt-2 font-medium">
-                                    💡 温馨提示：以上为根据学区大数据智能模糊匹配的结果。如果您明确知道自己的对口辖区初中，请直接在下方单选下拉框中进行选择。
+                                <div class="text-[10px] text-slate-400 leading-relaxed border-t border-slate-200 pt-2 font-medium">
+                                    提示：若上方未检索到您的小区，可直接在下方下拉框中手动选定您的对口参考公办初中。
                                 </div>
                             </div>
 
-                            <select id="assigned-public" class="w-full border rounded-lg p-2 text-xs text-blue-700 font-bold">
-                                <option value="">-- 手动选择对口公办 --</option>
+                            <select id="assigned-public" class="w-full border border-slate-200 rounded-lg p-2 text-xs text-slate-700 font-bold bg-white">
+                                <option value="">-- 手动选定对口公办初中 --</option>
                             </select>
+                            
+                            <div class="text-right">
+                                <span onclick="triggerExpertReview()" class="text-[10px] text-slate-500 underline cursor-pointer font-medium">找不到小区或匹配不准？申请人工复核参考</span>
+                            </div>
                         </div>
 
-                        <!-- 民办面板（直选全量民办） -->
                         <div id="private-panel" class="hidden space-y-3">
-                            <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-[10px] text-red-800 font-bold">
-                                ⚠️ 若民办未摇中，将退回学区公办。若该公办学额已满，有极高概率被“统筹安排”。
+                            <div class="bg-slate-100 border border-slate-200 p-3 rounded-xl text-[10px] text-slate-600 leading-relaxed">
+                                <b>参考备忘：</b>依据市区相关公开招生细则，填报民办且未被电脑随机派位录取的学生，将退回原对口公办初中。若届时该公办学校学位已满，将由相关区教育部门统筹安排至其他有空余学位的公办初中。最终录取规则请以官方发布为准。
                             </div>
-                            <div class="bg-orange-50 p-4 rounded-xl border border-orange-200 space-y-2">
-                                <h3 class="text-xs font-black text-gray-800">请选择目标摇号民办初中（全市直选）</h3>
-                                <select id="target-private-school" class="w-full border rounded-lg p-2 text-xs text-orange-700 font-bold">
-                                    <option value="">-- 正在读取民办学校名单 --</option>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                                <h3 class="text-xs font-bold text-slate-800">拟选择随机派位（摇号）民办初中</h3>
+                                <select id="target-private-school" class="w-full border border-slate-200 rounded-lg p-2 text-xs text-slate-700 font-bold bg-white">
+                                    <option value="">-- 读取民办学校测试名录 --</option>
                                 </select>
                             </div>
                         </div>
 
-                        <button onclick="submitIntent()" class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-black py-3.5 rounded-xl text-sm shadow">生成升学评估报告</button>
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[10px] text-slate-400 leading-normal">
+                            <b>参考声明：</b>本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。
+                        </div>
+
+                        <button onclick="submitIntent()" class="w-full bg-gradient-to-r from-slate-700 to-slate-800 text-white font-bold py-3.5 rounded-xl text-sm shadow-md">生成学业规划参考报告</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 页面四：生成深度报告 -->
+            <!-- 页面四：深度政策评估报告 -->
             <div id="page-report" class="hidden slide-in space-y-4">
-                <div class="bg-white rounded-3xl p-5 shadow text-center border">
-                    <span class="bg-green-100 text-green-700 text-xs font-black px-3 py-1 rounded-full">决策评估报告生成成功</span>
-                    <h3 class="text-sm font-black mt-2">徐州市区小升初时间轴推演</h3>
+                
+                <!-- 顶栏结构：右上角修改参数按钮 -->
+                <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 flex items-center justify-between relative">
+                    <div class="space-y-1 text-left flex-1 pr-4">
+                        <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-block">评估推演完成（仅供测试参考）</span>
+                        <h3 class="text-sm font-bold text-slate-800 mt-1">2026年徐州市区小升初录取参考推演</h3>
+                    </div>
+                    <button onclick="retestIntent()" class="bg-slate-50 border border-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-[11px] hover:bg-slate-100 transition-colors shrink-0 shadow-sm flex items-center space-x-1">
+                        <span>⚙️</span><span>修改参数</span>
+                    </button>
+                </div>
+
+                <!-- 核心免责置顶警示卡片 -->
+                <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-[11px] text-amber-900 leading-normal shadow-sm">
+                    ⚠️ <b>特别提示：</b>本报告所有推演和分析结论均属于第三方系统模拟测试结果，仅供入学参考。所有最终招生政策、学区划分、录取结果及材料要求，均须以教育局官方发布的实际规定为准。
+                </div>
+
+                <!-- 现场资料参考清单卡片 -->
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-3 shadow-sm animate-fade">
+                    <div class="flex justify-between items-center border-b border-slate-200/60 pb-2">
+                        <div class="font-bold text-slate-800 flex items-center space-x-1">
+                            <span>📋</span> <span>现场资质审核参考材料清单</span>
+                        </div>
+                        <span id="rep-seq-badge" class="bg-slate-600 text-white text-[9px] px-2 py-0.5 rounded font-black tracking-wider"></span>
+                    </div>
+                    
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <div class="text-[10px] text-slate-400 font-bold tracking-wide">根据您勾选的特定顺位，现场审核建议准备以下材料参考（具体以官方通知为准）：</div>
+                        <ul id="rep-material-list-ul" class="space-y-2 text-[11px] text-slate-700 font-medium pl-1">
+                            <!-- 动态追加材料 -->
+                        </ul>
+                    </div>
+                    
+                    <p class="text-[10px] text-slate-500 leading-relaxed pl-1">
+                        💡 <b>提示：</b>属于施教区内公办初中招生范围的，通常须遵循“房产证、户口簿、实际居住地”等一致性原则。热点学校还需注意对应的落户时限等公开政策。
+                    </p>
                 </div>
 
                 <!-- A阶段 -->
-                <div class="bg-purple-50 rounded-2xl p-4 border border-purple-100 text-xs space-y-1">
-                    <div class="font-black text-purple-800">【6月25-27日】A阶段：面向特定区域派位</div>
-                    <div class="text-gray-600">包含九里实验等特定学校。若您不符合该阶段条件，请关注下一阶段。</div>
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-1">
+                    <div class="font-bold text-slate-700">【阶段一：特定区域随机派位参考】</div>
+                    <div class="text-slate-500 leading-relaxed text-[11px]">包含面向特定区域招生的个别学校。若学生不具备相应片区学籍，在实际录取流程中通常会自动转入下一录取阶段。</div>
                 </div>
 
-                <!-- B阶段：动态渲染该校数据库完整内参 -->
-                <div class="bg-orange-50 rounded-2xl p-4 border border-orange-200 text-xs space-y-3 shadow-sm">
-                    <div class="font-black text-orange-800 flex items-center justify-between">
-                        <span>【6月28-30日】B阶段：第一阶段报名录取</span>
-                        <span class="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded" id="rep-intent"></span>
+                <!-- B阶段 -->
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-3">
+                    <div class="font-bold text-slate-900 flex items-center justify-between">
+                        <span>【阶段二：第一阶段第一志愿录取测试分析】</span>
+                        <span class="bg-slate-600 text-white text-[10px] px-2 py-0.5 rounded font-bold" id="rep-intent"></span>
                     </div>
                     
-                    <div class="bg-white p-4 rounded-xl space-y-3">
-                        <div class="flex justify-between items-center pb-2 border-b">
-                            <span class="text-gray-500 font-medium">目标初中</span>
-                            <span class="font-black text-orange-600 text-sm" id="rep-target-school"></span>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <span class="text-slate-500">评估目标初中</span>
+                            <span class="font-bold text-slate-800" id="rep-target-school"></span>
                         </div>
-                        <div class="flex justify-between items-center pb-2 border-b">
-                            <span class="text-gray-500 font-medium">测算录取率</span>
-                            <span class="font-black text-red-600 text-base" id="rep-prob"></span>
+                        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                            <div class="space-y-0.5">
+                                <span class="text-slate-500 block">参考估算概率</span>
+                                <span class="text-[10px] text-slate-400 block" id="rep-algo-tip">依据往年公开派位大盘比例粗略折算</span>
+                            </div>
+                            <span class="font-black text-slate-700 text-lg" id="rep-prob"></span>
                         </div>
-                        
-                        <!-- 动态数据库全字段详细档案投放区 -->
-                        <div id="rep-db-school-panel" class="space-y-3 pt-1 text-[11px]">
-                            <!-- 此处由 JS 动态生成全属性 -->
-                        </div>
+                        <div id="rep-db-school-panel" class="space-y-3 pt-1 text-[11px]"></div>
                     </div>
                 </div>
 
-                <!-- C阶段：动态判定退回统筹风险 + 动态解析公办底座参数 -->
-                <div class="bg-red-50 rounded-2xl p-4 border border-red-100 text-xs space-y-3">
-                    <div class="font-black text-red-800">【7月8日】C阶段：退回统筹与补录测算</div>
-                    <div class="text-gray-600">若B阶段未录取，须退回对口辖区公办初中：<span class="font-extrabold text-gray-800 text-[13px] underline" id="rep-fallback-school"></span> 审核。</div>
+                <!-- C阶段 -->
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-xs space-y-3">
+                    <div class="font-bold text-slate-900">【阶段三：未中签及统筹阶段参考】</div>
+                    <div class="text-slate-600 leading-relaxed text-[11px]">若首阶段未被民办随机派位录取，通常须退回原对口参考公办初中：<span class="font-bold text-slate-800 underline" id="rep-fallback-school"></span> 执行资质审核。</div>
                     
-                    <div class="bg-white p-3.5 rounded-xl border border-red-200/50 space-y-3">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 shrink-0 font-bold">对口公办退回溢出风险值</span>
-                            <span id="rep-risk-label" class="font-black text-red-600 text-xs"></span>
+                            <span class="text-slate-600 font-bold">对口公办学位统筹参考风险</span>
+                            <span id="rep-risk-label" class="font-bold text-slate-700"></span>
                         </div>
-                        <div class="bg-gray-200 h-2 rounded-full overflow-hidden">
-                            <div id="rep-risk-bar" class="bg-red-500 h-full w-0 transition-all duration-700"></div>
+                        <div class="bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div id="rep-risk-bar" class="bg-slate-500 h-full w-0 transition-all duration-700"></div>
                         </div>
 
-                        <!-- 动态载入的对口公办校内参底牌 -->
-                        <div id="rep-db-fallback-school-panel" class="text-[10px] text-gray-500 leading-relaxed space-y-2 border-t pt-2.5 hidden">
-                            <!-- 动态加载对口公办 -->
+                        <div class="bg-slate-50 p-2.5 rounded-lg text-[10px] text-slate-500 leading-relaxed border space-y-1">
+                            <div class="font-bold text-slate-700">🔍 风险评估主要参考依据：</div>
+                            <div>1. <b>学位饱和度：</b>比对近几年该公办校公开招生体量增量趋势。</div>
+                            <div>2. <b>落户时限等顺位：</b>热点学校若学位超出计划，通常依据相关规定顺位安排。</div>
+                            <div>3. <b>溢出参考效应：</b>部分热点公办学校直升人数较多，需注意统筹调剂可能性。</div>
                         </div>
+
+                        <div id="rep-db-fallback-school-panel" class="text-[11px] text-slate-600 leading-relaxed space-y-2 border-t border-slate-100 pt-2.5 hidden"></div>
                     </div>
                 </div>
 
-                <!-- 推广引流 -->
-                <div class="bg-gradient-to-br from-orange-100 to-amber-50 p-4 rounded-3xl border border-orange-200">
-                    <div class="text-xs font-black text-orange-900 mb-1 flex items-center space-x-1">
-                        <span>🎁</span>
-                        <span>高途新初一暑期衔接提分计划</span>
+                <!-- 后置引流 -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-3xl text-white shadow-xl space-y-3">
+                    <div class="space-y-1">
+                        <div class="text-xs font-bold text-slate-400 tracking-wider">测试特权服务</div>
+                        <h4 class="text-sm font-bold tracking-tight">【初中衔接学业规划测试服务】</h4>
                     </div>
-                    <p class="text-[10px] text-orange-800 mb-3">针对初中重点班分班考、层级摸底测试，徐州高途教研组免费派发内部暑衔核心资料包。</p>
-                    <button onclick="showToast('高途辅导老师将尽快与您取得联系并派发电子资料！')" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow">免费领取诊断讲义</button>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">
+                        针对初中阶段的学习特点与教研评估，特为本次测试用户提供《初中衔接学业规划诊断讲义与内部核心资料包》作为测试参考，协助孩子了解初中基础思维。
+                    </p>
+                    <button onclick="showToast('增值规划参考报告与电子讲义资料将由学业规划专家近期为您对接派发！')" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-xs transition-colors shadow-md">免费获取学科衔接诊断讲义（测试特权）</button>
                 </div>
-                
-                <!-- 重测决策按钮 -->
-                <button onclick="retestIntent()" class="w-full bg-white hover:bg-orange-50 text-orange-600 font-bold py-3.5 rounded-xl text-xs border border-orange-400 transition-colors">重新测试其他学校方案</button>
-            </div>
 
-            <!-- 页面五：后台看板 -->
-            <div id="page-admin" class="hidden slide-in space-y-4">
-                <div class="bg-white rounded-3xl p-5 shadow border">
-                    <div class="flex justify-between items-center pb-2 border-b mb-3">
-                        <h2 class="font-black text-sm">家长档案记录台</h2>
-                        <button onclick="nav('page-landing')" class="text-xs text-gray-400">退出</button>
-                    </div>
-                    <div class="text-xs mb-3">累计捕获家长线索：<b id="admin-stat-total" class="text-orange-600 text-base">0</b> 人</div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-[9px] border-collapse whitespace-nowrap">
-                            <thead><tr class="bg-gray-100 text-gray-500">
-                                <th class="p-2">时间</th>
-                                <th class="p-2">微信/身份</th>
-                                <th class="p-2">电话</th>
-                                <th class="p-2">意向</th>
-                                <th class="p-2">对口公办</th>
-                                <th class="p-2">最终目标志愿</th>
-                            </tr></thead>
-                            <tbody id="admin-leads-tbody" class="divide-y text-gray-700"></tbody>
-                        </table>
-                    </div>
+                <div class="bg-slate-100 p-3 rounded-xl text-[10px] text-slate-400 leading-normal text-center">
+                    声明：本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。
                 </div>
             </div>
 
         </div>
 
-        <!-- 底部暗门 -->
-        <div class="text-center mt-8 pb-4 text-[10px] text-gray-300">
-            <span class="cursor-pointer" onclick="document.getElementById('admin-login-modal').classList.remove('hidden')">© 2026 徐州教育择校自测系统</span>
+        <div class="text-center mt-8 pb-4 text-[10px] text-slate-400 font-medium space-y-1">
+            <div>项目主体：第三方小升初衔接学业规划测试服务中心</div>
+            <div class="px-6 text-slate-400/80 leading-normal">免责声明：本系统为第三方参考工具，数据基于官方通知及互联网公开数据整理分析，仅供测试参考，最终政策以教育局官方发布为准。</div>
         </div>
 
     </div>
 
-    <!-- 政策声明弹窗 -->
-    <div id="policy-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
-            <h3 class="font-black text-gray-800 text-base text-center">徐州高途温馨提示</h3>
-            <div class="text-[11px] text-gray-500 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p class="font-bold text-gray-700 mb-1">本系统仅供参考：</p>
-                <p>本系统基于徐州市历年小升初“公民同招”政策及大盘数据。2026年具体方案以官方发布为准，本测算不代表最终录取结果。</p>
-            </div>
-            <button onclick="acceptPolicy()" class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-black py-3.5 rounded-xl text-sm">我已知晓，开始测算</button>
-        </div>
-    </div>
-
+    <!-- 脚本控制中心 -->
     <script>
         const API_URL = "./api.php";
         let user = { 
-            openid: "", 
-            nickname: "", 
-            avatar: "", 
-            childName: "", 
-            parentPhone: "", 
-            grade: "六年级", 
-            currentSchool: "", 
-            schoolType: "公办", 
-            district: "泉山区", 
-            community: "", 
-            publicSchool: "", 
-            privateDistrict: "泉山区", 
-            privateSchool: "" 
+            openid: "", nickname: "", avatar: "", childName: "", parentPhone: "", 
+            grade: "六年级", currentSchool: "", schoolType: "公办", district: "泉山区", 
+            community: "", publicSchool: "", privateDistrict: "泉山区", privateSchool: "" 
         };
 
         const safeStorage = {
@@ -286,33 +335,83 @@
             remove(k) { try{ localStorage.removeItem(k); }catch(e){ delete window['_'+k]; } }
         };
 
-        // 核心监测自启动（拦截PC等非微信浏览器）
+        // 🌟 核心跳转导航函数彻底重构（确保绝不发生任何全局ReferenceError）
+        function nav(page) {
+            const pages = ['page-landing', 'page-register', 'page-intent', 'page-report'];
+            pages.forEach(p => {
+                const el = document.getElementById(p);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(page);
+            if (target) target.classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+        window.nav = nav; // 挂载到全局，供所有外部组件无缝调用
+
         window.addEventListener('DOMContentLoaded', async () => {
             const isWechat = /micromessenger/.test(navigator.userAgent.toLowerCase());
-            
             if (!isWechat) {
-                // 如果在非微信浏览器，立刻切出动态二维码遮罩
                 const currentUrl = window.location.href;
                 document.getElementById('dynamic-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUrl)}`;
                 document.getElementById('wechat-required-blocker').classList.remove('hidden');
-                return; // 彻底拦截，不让程序继续往下走
+                return;
             }
-            
-            // 只有是微信环境，才显示网页主体，并进行授权检验
             document.getElementById('main-app-container').classList.remove('hidden');
             await checkWx();
+            await initWechatShare(); 
         });
+
+        async function loadDistrictsFromDb() {
+            try {
+                const res = await fetch(`${API_URL}?action=get_districts`);
+                const districts = await res.json();
+                if (districts && districts.length > 0) {
+                    let html = '';
+                    districts.forEach(d => { html += `<option value="${d}">${d}</option>`; });
+                    document.getElementById('user-district').innerHTML = html;
+                    user.district = districts[0];
+                } else { throw new Error("Empty"); }
+            } catch (e) {
+                document.getElementById('user-district').innerHTML = '<option value="泉山区">泉山区</option><option value="云龙区">云龙区</option><option value="鼓楼区">鼓楼区</option><option value="经开区">经开区</option>';
+                user.district = "泉山区";
+            }
+            await renderPublicSchools();
+        }
+
+        async function initWechatShare() {
+            try {
+                const currentUrlWithoutHash = encodeURIComponent(window.location.href.split('#')[0]);
+                const res = await fetch(`${API_URL}?action=get_wx_config&url=${currentUrlWithoutHash}`);
+                const config = await res.json();
+                wx.config({
+                    debug: false, 
+                    appId: config.appId,
+                    timestamp: config.timestamp,
+                    nonceStr: config.nonceStr,
+                    signature: config.signature,
+                    jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+                });
+                wx.ready(function () {
+                    const shareData = { 
+                        title: '彭城小升初·市区公民同招测算参考系统（测试使用）',
+                        desc: '本工具为第三方参考系统，数据基于官方通知及互联网公开数据整理分析，仅供测试参考。',
+                        link: window.location.href.split('#')[0], 
+                        imgUrl: window.location.protocol + '//' + window.location.host + '/share_logo.png' 
+                    };
+                    wx.updateAppMessageShareData(shareData); 
+                    wx.updateTimelineShareData(shareData);     
+                });
+            } catch (e) {}
+        }
 
         async function checkWx() {
             const code = new URLSearchParams(window.location.search).get('code');
             let oid = safeStorage.get('wx_openid');
-            
             let cachedAvatar = safeStorage.get('wx_avatar');
             let cachedNickname = safeStorage.get('wx_nickname');
             
             if(cachedAvatar && cachedNickname) {
-                user.avatar = cachedAvatar;
-                user.nickname = cachedNickname;
+                user.avatar = cachedAvatar; user.nickname = cachedNickname;
                 document.getElementById('wx-pulse').classList.add('hidden');
                 document.getElementById('wx-avatar').src = cachedAvatar;
                 document.getElementById('wx-avatar').classList.remove('hidden');
@@ -323,577 +422,322 @@
                 try {
                     const res = await fetch(`${API_URL}?action=wx_login&code=${code}`);
                     const data = await res.json();
+                    if(data.isBlackout) { triggerBlackoutSandbox(); return; }
                     if(data.success) {
-                        user.openid = data.openid; 
-                        safeStorage.set('wx_openid', data.openid);
-                        
+                        user.openid = data.openid; safeStorage.set('wx_openid', data.openid);
                         if(data.nickname) {
-                            user.nickname = data.nickname;
-                            user.avatar = data.headimgurl;
-                            safeStorage.set('wx_nickname', data.nickname);
-                            safeStorage.set('wx_avatar', data.headimgurl);
-                            
+                            user.nickname = data.nickname; user.avatar = data.headimgurl;
+                            safeStorage.set('wx_nickname', data.nickname); safeStorage.set('wx_avatar', data.headimgurl);
                             document.getElementById('wx-pulse').classList.add('hidden');
                             document.getElementById('wx-avatar').src = data.headimgurl;
                             document.getElementById('wx-avatar').classList.remove('hidden');
                             document.getElementById('ui-wx-status').innerText = data.nickname;
                         } else {
-                            document.getElementById('ui-wx-status').innerText = "已微信安全授权";
+                            document.getElementById('ui-wx-status').innerText = "服务连接成功";
                         }
-
-                        // 如果该微信已经填过档案和志愿，直奔深度报告
-                        if(data.hasProfile && data.hasIntent) {
-                            await checkUserStatus(data.openid);
-                            return;
+                        if(data.hasProfile) {
+                            await checkUserStatus(data.openid); return;
                         }
                     }
-                } catch(e) {
-                    console.error("微信授权调度错误", e);
-                }
+                } catch(e) {}
                 window.history.replaceState({}, '', window.location.pathname);
-            } 
-            else if (!oid) {
-                // 如果是微信内置环境且尚未拿到 OpenID，重定向微信授权网关
-                window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx811ef2c7102e88b8&redirect_uri=${encodeURIComponent(window.location.href)}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
+            } else if (!oid) {
+                // 🌟 容错机制升级：如果在微信内静默授权受阻，或由于测试场景未能取得 openid，我们不强制阻塞，而是主动下发一个临时的游客 Oid，确保家长可以完美体验测算！
+                const isWechat = /micromessenger/.test(navigator.userAgent.toLowerCase());
+                if (isWechat) {
+                    window.location.href = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx811ef2c7102e88b8&redirect_uri=${encodeURIComponent(window.location.href)}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
+                    return;
+                } else {
+                    let tempOid = 'temp_' + Math.random().toString(36).substr(2, 9) + Date.now();
+                    safeStorage.set('wx_openid', tempOid);
+                    user.openid = tempOid;
+                    user.nickname = "自测用户";
+                    document.getElementById('ui-wx-status').innerText = user.nickname;
+                }
             } else { 
                 user.openid = oid; 
                 await checkUserStatus(oid);
             }
-            
-            // 初始化公办/民办下拉数据源
-            renderPublicSchools();
-            renderPrivateSchools();
+            await loadDistrictsFromDb(); 
+            await renderPrivateSchools();
         }
 
-        // 核心同步校验：检查是否需要跳过基本资料直接展示意向/结果
         async function checkUserStatus(openid) {
             try {
                 const res = await fetch(`${API_URL}?action=check_status&openid=${openid}`);
                 const data = await res.json();
+                if(data.isBlackout) { triggerBlackoutSandbox(); return; }
                 
                 if (data.success && data.hasProfile) {
-                    // 同步基础个人信息到全局变量
                     user.childName = data.profile.childName;
                     user.parentPhone = data.profile.parentPhone;
                     user.grade = data.profile.grade;
                     user.currentSchool = data.profile.currentSchool;
 
-                    // 同步回填输入框
                     document.getElementById('child-name').value = user.childName;
                     document.getElementById('parent-phone').value = user.parentPhone;
                     document.getElementById('child-grade').value = user.grade;
                     document.getElementById('current-school').value = user.currentSchool;
 
                     if (data.hasIntent) {
-                        // 连同历史志愿一并加载呈现
                         user.schoolType = data.profile.schoolType;
                         user.district = data.profile.targetDistrict;
                         user.community = data.profile.communityName;
                         user.publicSchool = data.profile.assignedPublicSchool;
                         user.privateSchool = data.profile.v1SchoolName;
                         user.privateDistrict = data.profile.v1District;
-
-                        generateReport(); 
-                    } else {
-                        // 已建档，直接略过注册页，显示意向选择页
-                        nav('page-intent');
                     }
                 }
-            } catch (e) {
-                console.error("加载云端数据备份失败", e);
-            }
+            } catch (e) {}
         }
 
-        // 点击一键免费测算
+        // 🌟 重新适配“开始政策测算”：全逻辑无漏判覆盖（新老用户完美分流，手机彻底点亮）
         async function startCalculate() {
-            const openid = localStorage.getItem('wx_openid');
-            if (openid) {
-                try {
-                    const res = await fetch(`${API_URL}?action=check_status&openid=${openid}`);
-                    const data = await res.json();
-                    if (data.success && data.hasProfile) {
-                        // 微信已存在建档，直接进意向页，不需要填手机号
-                        nav('page-intent');
-                        return;
-                    }
-                } catch(e) {}
+            let openid = safeStorage.get('wx_openid');
+            if (!openid) {
+                // 如果在本地缓存和静默中都拿不到 ID，直接生成一个高度防撞、防爆的备用 OID，彻底击碎空 ID 拦截！
+                openid = 'visitor_' + Math.random().toString(36).substr(2, 9) + Date.now();
+                safeStorage.set('wx_openid', openid);
             }
-            document.getElementById('policy-modal').classList.remove('hidden');
+            user.openid = openid;
+            
+            try {
+                const res = await fetch(`${API_URL}?action=check_status&openid=${openid}`);
+                const data = await res.json();
+                
+                // 老用户（已建过档案）：100% 成功跨入下一步，绝不让手机点不动！
+                if (data.success && data.hasProfile) {
+                    if (data.hasIntent) {
+                        generateReport(); // 已查过志愿的老用户 -> 直奔参考报告结果页
+                    } else {
+                        nav('page-intent'); // 有信息但无最新测试的老用户 -> 直接挺进意向选择填报页
+                    }
+                    return;
+                }
+            } catch(e) {}
+            nav('page-register'); // 纯白新用户去注册基本页
         }
 
-        // 重新测试：不删除 OpenID 或基本资料，保留基本输入，直接回到第二步
-        function retestIntent() {
-            nav('page-intent');
+        function triggerBlackoutSandbox() {
+            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('blackout-defense-blocker').classList.remove('hidden');
+            safeStorage.remove('wx_openid');
         }
+
+        function retestIntent() { nav('page-intent'); }
 
         function showToast(msg) {
             document.getElementById('toast-message').innerText = msg;
             let el = document.getElementById('toast-container');
-            el.classList.remove('opacity-0', 'scale-95');
-            el.classList.add('opacity-100', 'scale-100');
-            setTimeout(() => {
-                el.classList.remove('opacity-100', 'scale-100');
-                el.classList.add('opacity-0', 'scale-95');
-            }, 2500);
+            el.classList.remove('opacity-0', 'scale-95'); el.classList.add('opacity-100', 'scale-100');
+            setTimeout(() => { el.classList.remove('opacity-100', 'scale-100'); el.classList.add('opacity-0', 'scale-95'); }, 3000);
         }
 
-        function nav(page) {
-            ['page-landing', 'page-register', 'page-intent', 'page-report', 'page-admin'].forEach(p => document.getElementById(p).classList.add('hidden'));
-            document.getElementById(page).classList.remove('hidden');
-            window.scrollTo(0,0);
-        }
+        function triggerExpertReview() { showToast("复核参考工单已建立成功。"); }
 
-        function acceptPolicy() { 
-            document.getElementById('policy-modal').classList.add('hidden'); 
-            nav('page-register'); 
-        }
-
-        // 保存学生基本建档
         async function submitProfile() {
             user.childName = document.getElementById('child-name').value.trim();
             user.parentPhone = document.getElementById('parent-phone').value.trim();
             user.grade = document.getElementById('child-grade').value;
             user.currentSchool = document.getElementById('current-school').value.trim();
-
-            if(user.childName.length < 2 || !/^1[3-9]\d{9}$/.test(user.parentPhone)) {
-                return showToast("请输入正确的姓名与手机号");
-            }
-
+            if(user.childName.length < 2 || !/^1[3-9]\d{9}$/.test(user.parentPhone)) { return showToast("请输入基本测试信息"); }
             try { 
-                const res = await fetch(`${API_URL}?action=save_profile`, { 
-                    method: "POST", 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        openid: user.openid,
-                        childName: user.childName,
-                        parentPhone: user.parentPhone,
-                        grade: user.grade,
-                        currentSchool: user.currentSchool
-                    }) 
-                }); 
+                const res = await fetch(`${API_URL}?action=save_profile`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ openid: user.openid, childName: user.childName, parentPhone: user.parentPhone, grade: user.grade, currentSchool: user.currentSchool }) }); 
                 const data = await res.json();
-                if(data.success) {
-                    nav('page-intent');
-                } else {
-                    showToast("保存失败，请重试");
-                }
-            } catch(e) {
-                showToast("网络连接异常");
-            }
+                if(data.success) { nav('page-intent'); } else { showToast(data.message || "异常访问提示"); }
+            } catch(e) { showToast("网络通信受阻"); }
         }
 
         function toggleType(type) {
             user.schoolType = type;
-            if(type === '公办') {
-                document.getElementById('private-panel').classList.add('hidden');
-            } else {
-                document.getElementById('private-panel').classList.remove('hidden');
-            }
+            if(type === '公办') { document.getElementById('private-panel').classList.add('hidden'); } 
+            else { document.getElementById('private-panel').classList.remove('hidden'); }
         }
 
-        // 动态加载公办学校列表 (区分所属区)
         async function renderPublicSchools() {
             user.district = document.getElementById('user-district').value;
+            if (!user.district) return;
             try {
                 const res = await fetch(`${API_URL}?action=get_schools&type=public&district=${encodeURIComponent(user.district)}`);
                 const schools = await res.json();
-                let html = '<option value="">-- 手动选择对口公办 --</option>';
-                schools.forEach(x => {
-                    html += `<option value="${x.school_name}">${x.school_name}</option>`;
-                });
+                let html = '<option value="">-- 手动选定对口公办初中 --</option>';
+                schools.forEach(x => { html += `<option value="${x.school_name}">${x.school_name}</option>`; });
                 document.getElementById('assigned-public').innerHTML = html;
-            } catch(e) {
-                console.error("公办学校载入异常", e);
-            }
+            } catch(e) {}
         }
 
-        // 民办全市直选加载逻辑 (不区分任何行政区域过滤)
         async function renderPrivateSchools() {
             try {
                 const res = await fetch(`${API_URL}?action=get_schools&type=private`);
                 const schools = await res.json();
                 let html = '<option value="">-- 选择目标民办学校 --</option>';
-                schools.forEach(x => {
-                    html += `<option value="${x.school_name}">${x.school_name}</option>`;
-                });
+                schools.forEach(x => { html += `<option value="${x.school_name}">${x.school_name}</option>`; });
                 document.getElementById('target-private-school').innerHTML = html;
-            } catch(e) {
-                console.error("民办学校全量载入异常", e);
-            }
+            } catch(e) {}
         }
 
-        // 房产小区自动匹配多重对口初中 (支持渲染候选列表)
         async function matchCommunity(val) {
             const resultDiv = document.getElementById('ui-match-result');
             const listContainer = document.getElementById('ui-matched-schools-list');
-            
-            if(val.length < 2) {
-                resultDiv.classList.add('hidden');
-                return;
-            }
+            if(val.length < 2) { resultDiv.classList.add('hidden'); return; }
             try {
                 const res = await fetch(`${API_URL}?action=match_school&community=${encodeURIComponent(val)}`);
                 const matches = await res.json();
-                
                 if(matches && matches.length > 0) {
-                    resultDiv.classList.remove('hidden');
-                    listContainer.innerHTML = '';
-                    
+                    resultDiv.classList.remove('hidden'); listContainer.innerHTML = '';
                     matches.forEach((school, index) => {
-                        // 动态构建可点击的匹配列表项，修正文案为“官方施教区范围参考”
                         const schoolItem = document.createElement('div');
-                        schoolItem.className = "p-3 bg-white border border-green-100 hover:border-green-300 rounded-xl cursor-pointer transition-all flex justify-between items-center shadow-sm";
-                        schoolItem.innerHTML = `
-                            <div class="space-y-0.5 flex-1 pr-3">
-                                <div class="font-extrabold text-green-700 text-sm">${school.school_name}</div>
-                                <div class="text-[10px] text-gray-400 font-medium leading-relaxed">
-                                    <span class="font-black text-gray-500">官方施教区范围参考:</span> ${school.teaching_area || '暂无数据'}
-                                </div>
-                            </div>
-                            <span class="text-[10px] bg-green-100 text-green-800 font-extrabold px-2.5 py-1 rounded-full shrink-0">点击绑定</span>
-                        `;
-                        
-                        // 点击学校卡片触发：绑定并自动高亮当前选中项
+                        schoolItem.className = "p-3 bg-white border border-slate-100 hover:border-slate-300 rounded-xl cursor-pointer transition-all flex justify-between items-center shadow-sm";
+                        schoolItem.innerHTML = `<div class="space-y-0.5 flex-1 pr-3"><div class="font-bold text-slate-800 text-xs">${school.school_name}</div><div class="text-[10px] text-slate-400 font-medium leading-relaxed"><span class="font-bold text-slate-500">网络历史参考范围:</span> ${school.teaching_area || '暂无数据'}</div></div><span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2.5 py-1 rounded-full shrink-0">点击选定</span>`;
                         schoolItem.onclick = () => {
                             const selectEl = document.getElementById('assigned-public');
                             let hasOption = false;
-                            for(let i=0; i < selectEl.options.length; i++) {
-                                if(selectEl.options[i].value === school.school_name) {
-                                    hasOption = true;
-                                    break;
-                                }
-                            }
-                            // 如果下拉列表中暂无该学校（可能行政区跨选了），临时塞进下拉列表
-                            if(!hasOption) {
-                                const newOpt = new Option(school.school_name, school.school_name);
-                                selectEl.add(newOpt);
-                            }
-                            
-                            selectEl.value = school.school_name;
-                            user.publicSchool = school.school_name;
-                            showToast(`已成功选定对口初中：${school.school_name}`);
-                            
-                            // 更新卡片选中高亮样式
-                            document.querySelectorAll('#ui-matched-schools-list > div').forEach(div => {
-                                div.classList.remove('bg-green-50', 'border-green-400', 'ring-2', 'ring-green-400/20');
-                            });
-                            schoolItem.classList.add('bg-green-50', 'border-green-400', 'ring-2', 'ring-green-400/20');
+                            for(let i=0; i < selectEl.options.length; i++) { if(selectEl.options[i].value === school.school_name) { hasOption = true; break; } }
+                            if(!hasOption) { selectEl.add(new Option(school.school_name, school.school_name)); }
+                            selectEl.value = school.school_name; user.publicSchool = school.school_name;
+                            showToast(`已选定参考初中：${school.school_name}`);
                         };
-                        
                         listContainer.appendChild(schoolItem);
-                        
-                        // 默认将概率最大（第一个）匹配成功的学校直接配置进单选对象
                         if(index === 0) {
                             const selectEl = document.getElementById('assigned-public');
                             let hasOption = false;
-                            for(let i=0; i < selectEl.options.length; i++) {
-                                if(selectEl.options[i].value === school.school_name) {
-                                    hasOption = true;
-                                    break;
-                                }
-                            }
-                            if(!hasOption) {
-                                const newOpt = new Option(school.school_name, school.school_name);
-                                selectEl.add(newOpt);
-                            }
-                            selectEl.value = school.school_name;
-                            user.publicSchool = school.school_name;
-                            schoolItem.classList.add('bg-green-50', 'border-green-400', 'ring-2', 'ring-green-400/20');
+                            for(let i=0; i < selectEl.options.length; i++) { if(selectEl.options[i].value === school.school_name) { hasOption = true; break; } }
+                            if(!hasOption) { selectEl.add(new Option(school.school_name, school.school_name)); }
+                            selectEl.value = school.school_name; user.publicSchool = school.school_name;
                         }
                     });
-                } else {
-                    resultDiv.classList.add('hidden');
-                }
-            } catch(e) {
-                console.error("匹配匹配引擎异常", e);
-            }
+                } else { resultDiv.classList.add('hidden'); }
+            } catch(e) {}
         }
 
-        // 提交意向志愿
         async function submitIntent() {
             user.community = document.getElementById('community-name').value.trim() || "未填写具体小区";
             user.publicSchool = document.getElementById('assigned-public').value;
             user.privateSchool = document.getElementById('target-private-school').value;
-            
-            if(!user.publicSchool) { return showToast("请关联您的对口公办初中"); }
-            if(user.schoolType === '民办' && !user.privateSchool) { return showToast("请选择目标摇号民办初中"); }
+            user.district = document.getElementById('user-district').value;
+            user.sequenceType = document.getElementById('user-sequence-type').value;
 
-            const payload = {
-                openid: user.openid,
-                schoolType: user.schoolType,
-                targetDistrict: user.district,
-                communityName: user.community,
-                assignedPublicSchool: user.publicSchool,
-                v1_schoolName: user.schoolType === '公办' ? user.publicSchool : user.privateSchool,
-                v1_district: user.schoolType === '公办' ? user.district : '民办区域'
-            };
-
+            if(!user.publicSchool) { return showToast("请指定参考对口公办初中"); }
+            if(user.schoolType === '民办' && !user.privateSchool) { return showToast("请选定拟填报的目标民办初中"); }
+            const payload = { openid: user.openid, schoolType: user.schoolType, targetDistrict: user.district, communityName: user.community, assignedPublicSchool: user.publicSchool, v1_schoolName: user.schoolType === '公办' ? user.publicSchool : user.privateSchool, v1_district: user.schoolType === '公办' ? user.district : '民办区域' };
             try { 
-                const res = await fetch(`${API_URL}?action=save_intent`, { 
-                    method: "POST", 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload) 
-                }); 
+                const res = await fetch(`${API_URL}?action=save_intent`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
                 const data = await res.json();
-                if(data.success) {
-                    generateReport();
-                } else {
-                    showToast("保存失败，请稍后重试");
-                }
-            } catch(e) {
-                showToast("网络数据流阻塞");
-            }
+                if(data.success) { generateReport(); } else { showToast(data.message || "异常数据拦截"); }
+            } catch(e) { showToast("网络通信受阻"); }
         }
 
-        // 生成深度评估决策报告（核心重构：将公办/民办及退回公办的数据库全字段高精度展示）
         async function generateReport() {
             let targetSchName = user.schoolType === '公办' ? user.publicSchool : user.privateSchool;
             let targetSchType = user.schoolType === '公办' ? 'public' : 'private';
-
-            document.getElementById('rep-intent').innerText = user.schoolType + "第一志愿";
+            document.getElementById('rep-intent').innerText = user.schoolType + "第一志愿意向";
             document.getElementById('rep-target-school').innerText = targetSchName;
             document.getElementById('rep-fallback-school').innerText = user.publicSchool;
+            
+            const seqBadge = document.getElementById('rep-seq-badge');
+            const materialUl = document.getElementById('rep-material-list-ul');
+            materialUl.innerHTML = ''; 
+
+            let materialsArray = [];
+            if (user.sequenceType === 'seq1') {
+                seqBadge.innerText = "第一序列参考";
+                materialsArray = [
+                    "1. 📑 监护人身份证、家庭户口簿（建议原件+复印件）",
+                    "2. 🎓 学生毕业相关凭证/学籍基本卡",
+                    "3. 🏠 对应范围内的房产证或不动产权证（供一致性参考）"
+                ];
+            } else if (user.sequenceType.startsWith('seq2')) {
+                seqBadge.innerText = "第二序列参考";
+                if (user.sequenceType === 'seq2_3') {
+                    materialsArray = [
+                        "1. 📑 监护人身份证、家庭户口簿（建议原件+复印件）",
+                        "2. 🏠 房产证或不动产权凭证",
+                        "3. 💼 经商务工相关证明参考（如工商营业执照、劳动合同或社保证明等）",
+                        "4. 🎓 随迁子女学籍基本信息证明"
+                    ];
+                } else {
+                    materialsArray = [
+                        "1. 📑 监护人身份证、家庭户口簿（建议原件+复印件）",
+                        "2. 🎓 学生学籍证明材料",
+                        "3. 🏠 唯一房产证或（外）祖父母直系亲属房产证明文件等"
+                    ];
+                }
+            } else if (user.sequenceType.startsWith('seq3')) {
+                seqBadge.innerText = "第三序列参考";
+                if (user.sequenceType === 'seq3_1') {
+                    materialsArray = [
+                        "1. 📑 监护人身份证、家庭户口簿",
+                        "2. 🛠️ 拆迁安置协议/相关房产过渡证明材料",
+                        "3. 🎓 学生学籍基本信息证明"
+                    ];
+                } else {
+                    materialsArray = [
+                        "1. 📑 监护人身份证、家庭户口簿",
+                        "2. 🏠 租赁居住的相关合同及配套房屋权属复印件参考",
+                        "3. 💼 社保证明/工商营业执照/劳动合同等材料参考",
+                        "4. 🎓 随迁子女学籍信息材料"
+                    ];
+                }
+            } else {
+                seqBadge.innerText = "第四序列参考";
+                materialsArray = [
+                    "1. 📑 监护人身份证、家庭户口簿参考",
+                    "2. 🛠️ 房屋拆迁等相关过渡留存参考材料",
+                    "3. 🎓 学生毕业凭证/统一学籍号档案"
+                ];
+            }
+            materialsArray.forEach(m => {
+                let li = document.createElement('li');
+                li.className = "flex items-start text-slate-700 leading-relaxed";
+                li.innerText = m;
+                materialUl.appendChild(li);
+            });
 
             const dbPanel = document.getElementById('rep-db-school-panel');
-            dbPanel.innerHTML = '<div class="text-center text-gray-400 py-4">正在从高途内参加载核心档案...</div>';
-
             try {
-                // 1. 请求加载目标学校的全部数据库细节
                 const res = await fetch(`${API_URL}?action=get_school_details&type=${targetSchType}&name=${encodeURIComponent(targetSchName)}`);
                 const schoolDetails = await res.json();
-
                 if (user.schoolType === '公办') {
-                    document.getElementById('rep-prob').innerText = "100%";
-                    document.getElementById('rep-prob').className = "font-black text-green-600 text-base";
-
+                    document.getElementById('rep-prob').innerText = "仅供测试";
+                    document.getElementById('rep-prob').className = "font-bold text-slate-600 text-sm";
+                    document.getElementById('rep-algo-tip').innerText = "符合市区划片常规政策，具体以实际审核为准";
                     if (schoolDetails) {
-                        // 准备2023-2025年招生变化柱状迷你图
-                        const maxEnroll = Math.max(schoolDetails.enrollment_2025 || 1, schoolDetails.enrollment_2024 || 1, schoolDetails.enrollment_2023 || 1);
-                        const pct25 = ((schoolDetails.enrollment_2025 || 0) / maxEnroll * 100).toFixed(0);
-                        const pct24 = ((schoolDetails.enrollment_2024 || 0) / maxEnroll * 100).toFixed(0);
-                        const pct23 = ((schoolDetails.enrollment_2023 || 0) / maxEnroll * 100).toFixed(0);
-
-                        dbPanel.innerHTML = `
-                            <!-- 招生规模趋势图 -->
-                            <div class="bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                <div class="font-bold text-orange-950 mb-2 flex items-center space-x-1"><span>📈</span> <span>2023-2025年招生人数规模演变</span></div>
-                                <div class="flex items-end justify-around h-24 pt-4 pb-1">
-                                    <div class="flex flex-col items-center w-12">
-                                        <span class="text-[10px] font-bold text-gray-500">${schoolDetails.enrollment_2023 || '未公布'}人</span>
-                                        <div class="bg-gray-300 w-6 rounded-t transition-all duration-1000 mt-1" style="height: ${pct23}%"></div>
-                                        <span class="text-[9px] text-gray-400 mt-1">2023年</span>
-                                    </div>
-                                    <div class="flex flex-col items-center w-12">
-                                        <span class="text-[10px] font-bold text-gray-500">${schoolDetails.enrollment_2024 || '未公布'}人</span>
-                                        <div class="bg-orange-300 w-6 rounded-t transition-all duration-1000 mt-1" style="height: ${pct24}%"></div>
-                                        <span class="text-[9px] text-gray-400 mt-1">2024年</span>
-                                    </div>
-                                    <div class="flex flex-col items-center w-12">
-                                        <span class="text-[10px] font-black text-orange-600">${schoolDetails.enrollment_2025 || '未公布'}人</span>
-                                        <div class="bg-orange-500 w-6 rounded-t transition-all duration-1000 mt-1" style="height: ${pct25}%"></div>
-                                        <span class="text-[9px] text-orange-800 font-bold mt-1">2025年</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 升学业绩 & 班型内参 -->
-                            <div class="space-y-2">
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🏫 2026最新中考风向：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.exam_2026_info || '暂无数据/内参采集中。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🏫 2025中考风向参考：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.exam_2025_info || '平行分班稳健运行中。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🎒 重点班型/特色班型备注：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.special_class_note || '不承诺跨区域点招。'}</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 text-[10px]">
-                                    <div class="bg-gray-50 p-2 rounded-xl">☎️ <span class="font-bold">咨询电话:</span> ${schoolDetails.contact_phone || '暂无公示'}</div>
-                                    <div class="bg-gray-50 p-2 rounded-xl">💰 <span class="font-bold">收费学费:</span> ${schoolDetails.tuition_per_semester || '公办义务教育免收'}</div>
-                                </div>
-                                ${schoolDetails.remark ? `<div class="bg-amber-50 p-2.5 rounded-xl border border-amber-100 text-amber-800 leading-tight">💡 <span class="font-bold">高途内参备忘录：</span>${schoolDetails.remark}</div>` : ''}
-                            </div>
-                        `;
-                    } else {
-                        dbPanel.innerHTML = '<div class="text-center text-gray-400 py-4">未找到该学校的完整高途内参，可能为新建学校或数据整合中。</div>';
+                        const v23 = parseInt(schoolDetails.enrollment_2023) || 0;
+                        const v24 = parseInt(schoolDetails.enrollment_2024 || schoolDetails.enrollment_2025) || 0;
+                        const v25 = parseInt(schoolDetails.enrollment_2025) || 0;
+                        const maxVal = Math.max(v23, v24, v25, 1);
+                        const y23 = 75 - (v23 / maxVal) * 45; const y24 = 75 - (v24 / maxVal) * 45; const y25 = 75 - (v25 / maxVal) * 45;
+                        dbPanel.innerHTML = `<div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><div class="font-bold text-slate-700 mb-3 flex items-center space-x-1"><span>📈</span> <span>该校往年招生体量参考趋势（互联网公开数据）</span></div><div class="w-full bg-white rounded-lg p-2 border border-slate-200/60 shadow-inner"><svg viewBox="0 0 300 100" class="w-full h-24 overflow-visible"><defs><linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#64748b" stop-opacity="0.12"/><stop offset="100%" stop-color="#64748b" stop-opacity="0.0"/></linearGradient></defs><line x1="20" y1="30" x2="280" y2="30" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3,3" /><line x1="20" y1="52" x2="280" y2="52" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3,3" /><line x1="20" y1="75" x2="280" y2="75" stroke="#e2e8f0" stroke-width="1" /><path d="M 50 ${y23} L 150 ${y24} L 250 ${y25} L 250 75 L 50 75 Z" fill="url(#chartAreaGrad)" /><path d="M 50 ${y23} L 150 ${y24} L 250 ${y25}" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><circle cx="50" cy="${y23}" r="3.5" fill="#ffffff" stroke="#64748b" stroke-width="2" /><text x="50" y="${y23 - 8}" text-anchor="middle" class="text-[9px] fill-slate-500 font-bold">${v23}人</text><circle cx="150" cy="${y24}" r="3.5" fill="#ffffff" stroke="#64748b" stroke-width="2" /><text x="150" y="${y24 - 8}" text-anchor="middle" class="text-[9px] fill-slate-500 font-bold">${v24}人</text><circle cx="250" cy="${y25}" r="3.5" fill="#ffffff" stroke="#64748b" stroke-width="2" /><text x="250" y="${y25 - 8}" text-anchor="middle" class="text-[10px] fill-rose-600 font-black">${v25}人</text><text x="50" y="90" text-anchor="middle" class="text-[9px] fill-slate-400 font-medium">前年</text><text x="150" y="90" text-anchor="middle" class="text-[9px] fill-slate-400 font-medium">去年</text><text x="250" y="90" text-anchor="middle" class="text-[9px] fill-slate-500 font-bold">往年参考</text></svg></div></div><div class="space-y-2 text-[10px]"><div class="bg-slate-50 p-2.5 rounded-xl"><span class="font-bold text-slate-700">🏫 往年发展公开参考：</span><span class="text-slate-600">${schoolDetails.exam_2025_info || '暂无数据'}</span></div><div class="bg-slate-50 p-2.5 rounded-xl"><span class="font-bold text-slate-700">🎒 班型分布参考备注：</span><span class="text-slate-600">${schoolDetails.special_class_note || '基础分班管理参考'}</span></div></div>`;
                     }
-
-                    // 公办首选，C阶段无任何退回风险，进度条直接归零
                     document.getElementById('rep-risk-bar').style.width = "0%";
-                    document.getElementById('rep-risk-label').innerText = "0% (安全直升，无统筹风险)";
-                    document.getElementById('rep-risk-label').className = "font-black text-green-600";
+                    document.getElementById('rep-risk-label').innerText = "仅供测试（建议保持常规关注）";
+                    document.getElementById('rep-risk-label').className = "font-bold text-slate-600";
                     document.getElementById('rep-db-fallback-school-panel').classList.add('hidden');
-
                 } else {
-                    // ============================================
-                    // 2. 选择民办初中的高纯度展示逻辑
-                    // ============================================
-                    const publicInfoEl = document.getElementById('rep-public-info');
-                    if (publicInfoEl) publicInfoEl.classList.remove('hidden');
-
                     if (schoolDetails) {
-                        // 高阶中签摇号率计算
-                        let rate = "50.0";
-                        if (schoolDetails.lottery_rate_2025) {
-                            rate = (parseFloat(schoolDetails.lottery_rate_2025) * 100).toFixed(1);
-                        } else if (schoolDetails.signup_2025 > 0 && schoolDetails.admit_2025 > 0) {
-                            rate = ((schoolDetails.admit_2025 / schoolDetails.signup_2025) * 100).toFixed(1);
-                        }
+                        let rate = "50.0"; if (schoolDetails.lottery_rate_2025) { rate = (parseFloat(schoolDetails.lottery_rate_2025) * 100).toFixed(1); }
                         rate = parseFloat(rate) > 100 ? "100.0" : rate;
-
                         document.getElementById('rep-prob').innerText = rate + "%";
-                        document.getElementById('rep-prob').className = "font-black text-red-600 text-base";
-
-                        // 渲染民办2024 vs 2025年招生名额对比、饱和度看板
-                        dbPanel.innerHTML = `
-                            <!-- 民办录取大盘诊断 -->
-                            <div class="bg-red-50/50 p-3.5 rounded-xl border border-red-100 space-y-2">
-                                <div class="font-bold text-red-950 flex items-center space-x-1"><span>📊</span> <span>2025年度招生大盘透析</span></div>
-                                <div class="grid grid-cols-3 gap-2 text-center pt-1 text-[10px]">
-                                    <div class="bg-white p-2 rounded-lg border shadow-sm">
-                                        <div class="text-gray-400">核定招生计划</div>
-                                        <div class="font-black text-gray-800 text-xs mt-0.5">${schoolDetails.plan_2025 || '未公布'}人</div>
-                                    </div>
-                                    <div class="flex flex-col justify-center bg-white p-2 rounded-lg border shadow-sm">
-                                        <div class="text-gray-400">第一阶段报名</div>
-                                        <div class="font-black text-orange-600 text-xs mt-0.5">${schoolDetails.signup_2025 || '未公布'}人</div>
-                                    </div>
-                                    <div class="flex flex-col justify-center bg-white p-2 rounded-lg border shadow-sm">
-                                        <div class="text-gray-400">实际电脑录取</div>
-                                        <div class="font-black text-green-600 text-xs mt-0.5">${schoolDetails.admit_2025 || '未公布'}人</div>
-                                    </div>
-                                </div>
-                                <div class="text-[10px] text-gray-500 pt-1">
-                                    📊 2024年度大盘对比：计划招生 <span class="font-bold">${schoolDetails.plan_2024 || '未填'}</span> 人，报名审核人数 <span class="font-bold">${schoolDetails.signup_2024 || '未填'}</span> 人，实际电脑随机录取率约为 <span class="font-bold text-red-600">${schoolDetails.lottery_rate_2024 ? (parseFloat(schoolDetails.lottery_rate_2024)*100).toFixed(1) : '未公示'}%</span>。
-                                </div>
-                            </div>
-
-                            <!-- 升学业绩 & 班型内参 -->
-                            <div class="space-y-2">
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🏫 2026/2025中考升学业绩：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.exam_2025_info || '暂无公开数据。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">💰 学费标准/学期：</span>
-                                    <span class="text-red-700 font-black">${schoolDetails.tuition_per_semester || '电询。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🎒 民办直升方案：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.direct_admission_note || '完全服从徐州电脑摇号随机派位。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🎒 摇号具体规则：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.lottery_method || '第一阶段报名录取超额摇号。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                    <span class="font-black text-orange-800">🎒 特色班型备注：</span>
-                                    <span class="text-gray-700 font-medium">${schoolDetails.special_class_note || '中途无承诺。'}</span>
-                                </div>
-                                <div class="bg-gray-50 p-2.5 rounded-xl">☎️ <span class="font-bold text-gray-700">咨询热线:</span> <span class="font-black text-orange-600">${schoolDetails.contact_phone || '暂无公示'}</span></div>
-                                ${schoolDetails.remark ? `<div class="bg-amber-50 p-2.5 rounded-xl border border-amber-100 text-amber-800 leading-tight">💡 <span class="font-bold">民办内参备注：</span>${schoolDetails.remark}</div>` : ''}
-                            </div>
-                        `;
-                    } else {
-                        dbPanel.innerHTML = '<div class="text-center text-gray-400 py-4">未找到该民办学校的高途内参档案。</div>';
+                        document.getElementById('rep-prob').className = "font-black text-slate-700 text-base";
+                        document.getElementById('rep-algo-tip').innerText = "测试参考：基于历史公开报名及录取情况估算";
+                        dbPanel.innerHTML = `<div class="bg-slate-50 p-3 rounded-xl border space-y-2"><div class="font-bold text-slate-700 flex items-center space-x-1"><span>📊</span> <span>历史年度招生大盘公开数据透析</span></div><div class="grid grid-cols-3 gap-2 text-center pt-1 text-[9px]"><div class="bg-white p-2 rounded border"><div class="text-slate-400">核定计划参考</div><div class="font-bold text-slate-800 text-xs mt-0.5">${schoolDetails.plan_2025 || '未公布'}</div></div><div class="bg-white p-2 rounded border"><div class="text-slate-400">公开报名参考</div><div class="font-bold text-slate-800 text-xs mt-0.5">${schoolDetails.signup_2025 || '未公布'}</div></div><div class="bg-white p-2 rounded border"><div class="text-slate-400">公开派位参考</div><div class="font-bold text-slate-700 text-xs mt-0.5">${schoolDetails.admit_2025 || '未公布'}</div></div></div></div><div class="space-y-2 text-[10px]"><div class="bg-slate-50 p-2.5 rounded-xl"><span class="font-bold text-slate-700">🏫 升学情况参考：</span><span class="text-slate-600">${schoolDetails.exam_2025_info || '暂无数据'}</span></div><div class="bg-slate-50 p-2.5 rounded-xl"><span class="font-bold text-slate-700">💰 往年办学花费/学期：</span><span class="text-slate-700 font-bold">${schoolDetails.tuition_per_semester || '未披露'}</span></div></div>`;
                     }
-
-                    // ============================================
-                    // 3. 动态加载“退回对口公办”的数据诊断
-                    // ============================================
                     const pubRes = await fetch(`${API_URL}?action=get_school_details&type=public&name=${encodeURIComponent(user.publicSchool)}`);
                     const pubDetails = await pubRes.json();
-                    
-                    const fallbackPanel = document.getElementById('rep-db-fallback-school-panel');
-                    fallbackPanel.classList.remove('hidden');
-
-                    let isHot = pubDetails && (
-                        (pubDetails.remark && pubDetails.remark.indexOf('热点') !== -1) || 
-                        pubDetails.school_name.indexOf('一中') !== -1 || 
-                        pubDetails.school_name.indexOf('十三中') !== -1 || 
-                        pubDetails.school_name.indexOf('树人') !== -1 ||
-                        pubDetails.school_name.indexOf('三十中') !== -1
-                    );
-
+                    const fallbackPanel = document.getElementById('rep-db-fallback-school-panel'); fallbackPanel.classList.remove('hidden');
+                    let isHot = pubDetails && ((pubDetails.remark && pubDetails.remark.indexOf('热点') !== -1) || pubDetails.school_name.indexOf('一中') !== -1 || pubDetails.school_name.indexOf('十三中') !== -1 || pubDetails.school_name.indexOf('树人') !== -1 || pubDetails.school_name.indexOf('三十中') !== -1);
                     if(isHot) {
                         setTimeout(() => document.getElementById('rep-risk-bar').style.width = "85%", 100);
-                        document.getElementById('rep-risk-label').innerText = "85% (高危极易被统筹)";
-                        document.getElementById('rep-risk-label').className = "font-black text-red-600 text-xs";
-                        
-                        fallbackPanel.innerHTML = `
-                            <div class="bg-red-50 p-2.5 rounded-xl border border-red-200 text-red-800 font-bold mb-2">
-                                ⚠️ 警告：对口辖区初中 <span class="underline">${user.publicSchool}</span> 为徐州市特级热点学校！
-                            </div>
-                            <div class="space-y-1.5 text-gray-600 text-[10px]">
-                                <div>🏫 <b>招生体量参考：</b>2025年该校招生约 <span class="font-bold text-gray-800">${pubDetails ? pubDetails.enrollment_2025 : '未知'}</span> 人，学位容量已逼近极限。</div>
-                                <div>🎒 <b>中考中招参考：</b>${pubDetails ? pubDetails.exam_2025_info : '暂无数据'}</div>
-                                <div>☎️ <b>该校招生办电话：</b>${pubDetails ? pubDetails.contact_phone : '暂无公示'}</div>
-                                <div class="text-red-700 font-medium">💡 统筹后果：一旦您一志愿选择民办摇号未中，返回该校时极大概率因名额爆满被统筹调剂到其余区属薄弱初中。建议谨慎考虑！</div>
-                            </div>
-                        `;
+                        document.getElementById('rep-risk-label').innerText = "提防满额统筹风险（仅供测试参考）";
+                        fallbackPanel.innerHTML = `<div class="bg-slate-100 p-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold mb-1">测试警示：对口公办初中往年关注度较高</div><div class="text-[10px] text-slate-500 space-y-1"><div>若民办随机派位未录中，退回该对口公办学校时，建议密切留意其当年实际空余学位及具体统筹规则。</div></div>`;
                     } else {
-                        setTimeout(() => document.getElementById('rep-risk-bar').style.width = "10%", 100);
-                        document.getElementById('rep-risk-label').innerText = "10% (统筹风险极低)";
-                        document.getElementById('rep-risk-label').className = "font-black text-green-600 text-xs";
-                        
-                        fallbackPanel.innerHTML = `
-                            <div class="bg-green-50 p-2.5 rounded-xl border border-green-200 text-green-800 font-bold mb-2">
-                                ✅ 安全提示：对口辖区初中 <span class="underline">${user.publicSchool}</span> 目前名额充裕。
-                            </div>
-                            <div class="space-y-1.5 text-gray-600 text-[10px]">
-                                <div>🏫 <b>2025年招生规模：</b>该校2025年招生 <span class="font-bold text-gray-800">${pubDetails ? pubDetails.enrollment_2025 : '暂无'}</span> 人，大盘供给充足。</div>
-                                <div>🎒 <b>中考质量底盘：</b>${pubDetails ? pubDetails.exam_2025_info : '暂无数据'}</div>
-                                <div>🎒 <b>班型班风参考：</b>${pubDetails ? pubDetails.special_class_note : '实施平行教学分班。'}</div>
-                                <div>☎️ <b>学校咨询电话：</b>${pubDetails ? pubDetails.contact_phone : '暂无公示'}</div>
-                                <div class="text-green-700 font-medium">💡 统筹评估：该公办校容量充沛，即便您一志愿摇号未中，退回该校时依然大概率能够被平稳接收。</div>
-                            </div>
-                        `;
+                        setTimeout(() => document.getElementById('rep-risk-bar').style.width = "15%", 100);
+                        document.getElementById('rep-risk-label').innerText = "常态化关注（仅供测试参考）";
+                        fallbackPanel.innerHTML = `<div class="bg-slate-100 p-2.5 rounded-xl border border-slate-200 text-slate-800 font-bold mb-1">常规评估：学位相对充裕</div><div class="text-[10px] text-slate-500 space-y-1"><div>数据显示该校近年来学位供给较为充沛。本结论仅供测试参考，具体接收情况请以官方实际发布为准。</div></div>`;
                     }
                 }
-            } catch(e) {
-                console.error("生成升学报告决策发生未知异常", e);
-                dbPanel.innerHTML = '<div class="text-center text-gray-400 py-4">数据库内参拉取超时。</div>';
-            }
+            } catch(e) {}
             nav('page-report');
-        }
-
-        // 后台管理员入口
-        async function submitAdminPassword() {
-            if(document.getElementById('admin-password-input').value === "xzxsc2026") {
-                document.getElementById('admin-login-modal').classList.add('hidden');
-                try {
-                    const res = await fetch(`${API_URL}?action=list`);
-                    const list = await res.json();
-                    
-                    document.getElementById('admin-stat-total').innerText = list.length;
-                    let html = '';
-                    list.forEach(item => {
-                        let avatarSrc = item.wx_avatar ? item.wx_avatar : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
-                        let nickname = item.wx_nickname || "未授权";
-                        
-                        html += `<tr class="hover:bg-orange-50">
-                                    <td class="p-2">${item.dateStr}</td>
-                                    <td class="p-2 flex items-center space-x-2">
-                                        <img src="${avatarSrc}" class="w-5 h-5 rounded-full object-cover shadow-sm">
-                                        <span class="truncate w-14 font-bold" title="${nickname}">${nickname}</span>
-                                    </td>
-                                    <td class="p-2">${item.parentPhone}<br><span class="text-[8px] text-gray-400">${item.childName}</span></td>
-                                    <td class="p-2 text-blue-600 font-bold">${item.schoolType}</td>
-                                    <td class="p-2">${item.assignedPublicSchool}</td>
-                                    <td class="p-2 font-bold text-orange-600">${item.v1_schoolName}</td>
-                                 </tr>`;
-                    });
-                    document.getElementById('admin-leads-tbody').innerHTML = html;
-                    nav('page-admin');
-                } catch(e) {
-                    showToast("管理员看板拉取失败");
-                }
-            } else { 
-                showToast("管理授权口令错误"); 
-            }
         }
     </script>
 </body>
